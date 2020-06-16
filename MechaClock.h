@@ -1,5 +1,7 @@
 #ifndef _mecha_clock_
 #define _mecha_clock_
+#define INTERVAL 0
+//:set tabstop=8
 
 constexpr uint8_t DIGITS = 4;
 constexpr uint8_t SEGMENTS = 7;
@@ -8,7 +10,9 @@ constexpr uint8_t SEGMENTS = 7;
 extern uint8_t ON[DIGITS][SEGMENTS];
 extern uint8_t OFF[DIGITS][SEGMENTS];
 
-uint8_t interval = 30;
+#ifdef INTERVAL
+uint8_t interval = INTERVAL;
+#endif
 
 // Дефайны скопированы из библиотеки iarduino_I2C_4LED
 // DEC 10  // print(0xFFF , DEC); вывод числа в 10-тичной системе = 4095
@@ -27,11 +31,11 @@ uint8_t interval = 30;
 #define POS4 24  // print(12, POS4 ,[LEFT]); вывод числа со сдвигом от влево  от 4 позиции = ••12
 
 // Карта подключения серво к двум экспандерам.
-// Сегменты:                               G  F  E  D  C  B  A
+// Сегменты:                          G  F  E  D  C  B  A
 // Индексы выводов экспандера
-constexpr uint8_t _index_map_0[SEGMENTS] { 3, 0, 2, 1, 0, 2, 1 };
+constexpr uint8_t _exp_io[SEGMENTS] { 3, 0, 2, 1, 0, 2, 1 };
 // Чётный/нечётный экспандер (1 - это чётный, C'est la vie)
-constexpr uint8_t _index_map_1[SEGMENTS] { 0, 0, 1, 1, 1, 0, 0 };
+constexpr uint8_t _exp_num[SEGMENTS] { 0, 0, 1, 1, 1, 0, 0 };
 
 // Буфер символов
 char data[DIGITS];
@@ -77,12 +81,16 @@ class Digit {
 
 			for (uint8_t i = 0; i < SEGMENTS; i++) {
 				if ((ch >> (i+1)) & 1) {
-					_E[_index_map_1[i]].servoWrite(_index_map_0[i], ON[_d][i]);
+					// например: экспандер[чётный/нечётный].servoWrite(вывод, угол);
+					// чётный/нечётный и вывод берутся из таблиц выше
+					_E[_exp_num[i]].servoWrite(_exp_io[i], ON[_d][i]);
 				}
 				else {
-					_E[_index_map_1[i]].servoWrite(_index_map_0[i], OFF[_d][i]);
+					_E[_exp_num[i]].servoWrite(_exp_io[i], OFF[_d][i]);
 				}
+#ifdef INTERVAL
 				delay(interval);
+#endif
 			}
 		}
 
@@ -92,7 +100,7 @@ class Digit {
 				return;
 
 			for (uint8_t i = 0; i < SEGMENTS; i++)
-				_E[_index_map_1[i]].pinMode(_index_map_0[i], INPUT);
+				_E[_exp_num[i]].pinMode(_exp_io[i], INPUT);
 		}
 
 		// Скопировано из библиотеки iarduino_I2C_4LED
@@ -194,9 +202,11 @@ class MechaClock {
 		MechaClock(iarduino_I2C_Expander* E, uint8_t i = 30):
 				_E(E)
 		{
+#ifdef INTERVAL
 			// Устанавливаем интервал переключения сегментов
 			if (i != 30)
 				interval = i;
+#endif
 			// Заполняем поля объектов цифр
 			for (size_t i = 0; i < DIGITS; i++)
 				_dig[i] = Digit(E, i);
