@@ -199,16 +199,22 @@ class MechaClock {
 	public:
 		// Создаём объект, инициализируем поле
 	       	// указателя на массив объектов расширителей выводов
-		MechaClock(iarduino_I2C_Expander* E, uint8_t i = 30):
+		MechaClock(iarduino_I2C_Expander* E, uint8_t i = INTERVAL, uint8_t dig_num = DIGITS):
 				_E(E)
 		{
 #ifdef INTERVAL
 			// Устанавливаем интервал переключения сегментов
-			if (i != 30)
+			if (i != INTERVAL)
 				interval = i;
 #endif
+			if (dig_num > 4)
+				dig_num = 4;
+
+			if (dig_num != DIGITS)
+				_dig_num = dig_num;
+
 			// Заполняем поля объектов цифр
-			for (size_t i = 0; i < DIGITS; i++)
+			for (size_t i = 0; i < _dig_num; i++)
 				_dig[i] = Digit(E, i);
 		}
 
@@ -697,5 +703,15 @@ class MechaClock {
 
 		// Пустые объекты цифр
 		Digit _dig[DIGITS];
+
+		// Количество цифр, если это не часы
+		uint8_t _dig_num;
 };
+
+class Display: public MechaClock {
+	public:
+		using MechaClock::MechaClock;
+};
+
+
 #endif
