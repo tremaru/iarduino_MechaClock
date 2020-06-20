@@ -210,8 +210,7 @@ class MechaClock {
 			if (dig_num > 4)
 				dig_num = 4;
 
-			if (dig_num != DIGITS)
-				_dig_num = dig_num;
+			_dig_num = dig_num;
 
 			// Заполняем поля объектов цифр
 			for (size_t i = 0; i < _dig_num; i++)
